@@ -31,16 +31,24 @@ def test_dump_date():
     }
 
 
+def test_dump_datetime():
+    assert TestSchemaDateTime().dump({"datetime": "2020-01-01T10:00:00"}) == {
+        "datetime": "2020-01-01T10:00:00",
+    }
+
+
 def test_dump_lvl2_date():
     assert TestSchemaDate().dump({"date": "2020-09-XX/2020-10-XX"}) == {
         "date": "2020-09-XX/2020-10-XX",
     }
 
 
-def test_dump_datetime():
-    assert TestSchemaDateTime().dump({"datetime": "2020-01-01T10:00:00"}) == {
-        "datetime": "2020-01-01T10:00:00",
-    }
+def test_load_lvl2date():
+    s = TestSchemaLVL2Date()
+    assert s.load({"date": "2020?"})
+    assert s.load({"date": "2020-01-01"})
+    assert s.load({"date": "2004-06-~01/2004-06-~20"})
+    assert s.load({"date": "2020-01-XX"})
 
 
 def test_load_date():
@@ -73,63 +81,6 @@ def test_load_date():
     pytest.raises(ValidationError, s.load, {"date": "/0000-05-06"})
 
 
-def test_load_date_lvl0_precision():
-    s = TestSchemaDate()
-
-    # Year precision
-    assert s.load({"date": "2020"}) == {"date": "2020"}
-
-    # Month precision
-    assert s.load({"date": "2020-09"}) == {"date": "2020-09"}
-
-    # Full date precision
-    assert s.load({"date": "2020-01-01"}) == {"date": "2020-01-01"}
-
-
-def test_load_datetime_lvl0_timezones():
-    s = TestSchemaDateTime()
-
-    # UTC date-time
-    assert s.load({"datetime": "2020-01-01T10:00:00Z"}) == {
-        "datetime": "2020-01-01T10:00:00Z",
-    }
-
-    # Time zone offset in hours
-    assert s.load({"datetime": "2020-01-01T10:00:00+02"}) == {
-        "datetime": "2020-01-01T10:00:00+02",
-    }
-
-    # Time zone offset in hours and minutes
-    assert s.load({"datetime": "2020-01-01T10:00:00+02:00"}) == {
-        "datetime": "2020-01-01T10:00:00+02:00",
-    }
-
-
-def test_load_date_intervals():
-    s = TestSchemaDate()
-
-    # Year-to-year interval
-    assert s.load({"date": "2020/2021"}) == {"date": "2020/2021"}
-
-    # Date-to-date interval
-    assert s.load({"date": "2020-01-01/2020-01-05"}) == {
-        "date": "2020-01-01/2020-01-05",
-    }
-
-    # Mixed precision interval
-    assert s.load({"date": "2020-01/2020-02-05"}) == {
-        "date": "2020-01/2020-02-05",
-    }
-
-
-def test_load_lvl2date():
-    s = TestSchemaLVL2Date()
-    assert s.load({"date": "2020?"})
-    assert s.load({"date": "2020-01-01"})
-    assert s.load({"date": "2004-06-~01/2004-06-~20"})
-    assert s.load({"date": "2020-01-XX"})
-
-
 def test_load_datetime():
     s = TestSchemaDateTime()
     assert s.load({"datetime": "2020-01-01T10:00:00"})
@@ -140,50 +91,6 @@ def test_load_datetime():
         s.load,
         {"datetime": "2020-01-01T10:00:00/2020-02-01T10:00:00"},
     )
-
-
-def test_load_valid_month_end_dates():
-    s = TestSchemaDate()
-    assert s.load({"date": "2020-04-30"}) == {"date": "2020-04-30"}
-    assert s.load({"date": "2020-12-31"}) == {"date": "2020-12-31"}
-
-
-def test_load_earliest_positive_year():
-    s = TestSchemaDate()
-    assert s.load({"date": "0001-01-01"}) == {"date": "0001-01-01"}
-
-
-# Invalid calendar dates
-
-
-def test_load_invalid_leap_year_date():
-    s = TestSchemaDate()
-    pytest.raises(ValidationError, s.load, {"date": "2021-02-29"})
-
-
-def test_load_invalid_day_of_month():
-    s = TestSchemaDate()
-    pytest.raises(ValidationError, s.load, {"date": "2020-02-30"})
-
-
-def test_load_invalid_april_date():
-    s = TestSchemaDate()
-    pytest.raises(ValidationError, s.load, {"date": "2020-04-31"})
-
-
-def test_load_invalid_month_13():
-    s = TestSchemaDate()
-    pytest.raises(ValidationError, s.load, {"date": "2020-13"})
-
-
-def test_load_invalid_month_00():
-    s = TestSchemaDate()
-    pytest.raises(ValidationError, s.load, {"date": "2020-00"})
-
-
-def test_load_invalid_day_00():
-    s = TestSchemaDate()
-    pytest.raises(ValidationError, s.load, {"date": "2020-01-00"})
 
 
 # Valid date-time timezone offsets
@@ -240,6 +147,99 @@ def test_load_datetime_missing_seconds():
     pytest.raises(ValidationError, s.load, {"datetime": "2020-01-01T10:00"})
 
 
+def test_load_datetime_lvl0_timezones():
+    s = TestSchemaDateTime()
+
+    # UTC date-time
+    assert s.load({"datetime": "2020-01-01T10:00:00Z"}) == {
+        "datetime": "2020-01-01T10:00:00Z",
+    }
+
+    # Time zone offset in hours
+    assert s.load({"datetime": "2020-01-01T10:00:00+02"}) == {
+        "datetime": "2020-01-01T10:00:00+02",
+    }
+
+    # Time zone offset in hours and minutes
+    assert s.load({"datetime": "2020-01-01T10:00:00+02:00"}) == {
+        "datetime": "2020-01-01T10:00:00+02:00",
+    }
+
+
+def test_load_date_lvl0_precision():
+    s = TestSchemaDate()
+
+    # Year precision
+    assert s.load({"date": "2020"}) == {"date": "2020"}
+
+    # Month precision
+    assert s.load({"date": "2020-09"}) == {"date": "2020-09"}
+
+    # Full date precision
+    assert s.load({"date": "2020-01-01"}) == {"date": "2020-01-01"}
+
+
+def test_load_date_intervals():
+    s = TestSchemaDate()
+
+    # Year-to-year interval
+    assert s.load({"date": "2020/2021"}) == {"date": "2020/2021"}
+
+    # Date-to-date interval
+    assert s.load({"date": "2020-01-01/2020-01-05"}) == {
+        "date": "2020-01-01/2020-01-05",
+    }
+
+    # Mixed precision interval
+    assert s.load({"date": "2020-01/2020-02-05"}) == {
+        "date": "2020-01/2020-02-05",
+    }
+
+
+def test_load_valid_month_end_dates():
+    s = TestSchemaDate()
+    assert s.load({"date": "2020-04-30"}) == {"date": "2020-04-30"}
+    assert s.load({"date": "2020-12-31"}) == {"date": "2020-12-31"}
+
+
+def test_load_earliest_positive_year():
+    s = TestSchemaDate()
+    assert s.load({"date": "0001-01-01"}) == {"date": "0001-01-01"}
+
+
+# Invalid calendar dates
+
+
+def test_load_invalid_leap_year_date():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2021-02-29"})
+
+
+def test_load_invalid_day_of_month():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2020-02-30"})
+
+
+def test_load_invalid_april_date():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2020-04-31"})
+
+
+def test_load_invalid_month_13():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2020-13"})
+
+
+def test_load_invalid_month_00():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2020-00"})
+
+
+def test_load_invalid_day_00():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2020-01-00"})
+
+
 # Valid date intervals
 
 
@@ -281,9 +281,9 @@ def test_load_month_to_day_interval():
 # Invalid date intervals
 
 
-# def test_load_interval_missing_end_date():
-#     s = TestSchemaDate()
-#     pytest.raises(ValidationError, s.load, {"date": "2020/"})
+def test_load_interval_missing_end_date():
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2020/"})
 
 
 def test_load_interval_invalid_start_month():
