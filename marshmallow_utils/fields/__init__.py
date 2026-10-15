@@ -11,7 +11,7 @@ from .babel import (
     FormatTime,
 )
 from .contrib import Function, Method
-from .edtfdatestring import EDTFDateString, EDTFDateTimeString, EDTFLevel2DateString
+from .edtfdatestring import EDTFDateString, EDTFDateTimeString
 from .generated import GenFunction, GenMethod
 from .identifier import IdentifierSet, IdentifierValueSet
 from .isodate import ISODateString
@@ -31,7 +31,6 @@ __all__ = (
     "BabelGettextDictField",
     "EDTFDateString",
     "EDTFDateTimeString",
-    "EDTFLevel2DateString",
     "FormatDate",
     "FormatDatetime",
     "FormatEDTF",

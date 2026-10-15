@@ -92,28 +92,3 @@ class EDTFDateTimeString(fields.Str):
         """Constructor."""
         kwargs.setdefault("validate", EDTFValidator())
         super().__init__(**kwargs)
-
-
-class EDTFLevel2DateString(fields.Str):
-    """
-    Extended Date Format Level 2 date string field.
-
-    A string field which is using the EDTF Validator.
-    """
-
-    def __init__(self, **kwargs):
-        """Constructor."""
-        kwargs.setdefault(
-            "validate",
-            EDTFValidator(
-                types=[
-                    Date,
-                    Interval,
-                    Level1Interval,
-                    UncertainOrApproximate,
-                    OneOfASet,
-                    Level2Interval,
-                ]
-            ),
-        )
-        super().__init__(**kwargs)
