@@ -115,8 +115,8 @@ class FormatEDTF(BabelFormatField):
         try:
             return format_edtf(value, format=self._format, locale=self.locale)
         except (ValueError, OverflowError):
-            # Stored values that EDTF accepts but Python's
-            # datetime cannot (e.g. negative years, year 0) show the raw string:
+            # For stored values that EDTF accepts, but Python's
+            # datetime doesn't (e.g. negative years, year 0), show the raw string
             # instead of failing the whole page.
             return value
 
