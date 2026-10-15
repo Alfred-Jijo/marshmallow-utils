@@ -6,7 +6,15 @@
 from datetime import MAXYEAR, MINYEAR
 
 from babel_edtf import parse_edtf
-from edtf import Date, DateAndTime, Interval, Level1Interval
+from edtf import (
+    Date,
+    DateAndTime,
+    Interval,
+    Level1Interval,
+    Level2Interval,
+    OneOfASet,
+    UncertainOrApproximate,
+)
 from marshmallow import ValidationError, fields
 from marshmallow.validate import Validator
 from pyparsing import ParseException
@@ -93,4 +101,29 @@ class EDTFDateTimeString(fields.Str):
     def __init__(self, **kwargs):
         """Constructor."""
         kwargs.setdefault("validate", EDTFValidator())
+        super().__init__(**kwargs)
+
+
+class EDTFLevel2DateString(fields.Str):
+    """
+    Extended Date Format Level 2 date string field.
+
+    A string field which is using the EDTF Validator.
+    """
+
+    def __init__(self, **kwargs):
+        """Constructor."""
+        kwargs.setdefault(
+            "validate",
+            EDTFValidator(
+                types=[
+                    Date,
+                    Interval,
+                    Level1Interval,
+                    UncertainOrApproximate,
+                    OneOfASet,
+                    Level2Interval,
+                ]
+            ),
+        )
         super().__init__(**kwargs)

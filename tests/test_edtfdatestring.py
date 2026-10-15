@@ -9,6 +9,7 @@ from marshmallow import Schema, ValidationError
 from marshmallow_utils.fields import (
     EDTFDateString,
     EDTFDateTimeString,
+    EDTFLevel2DateString,
 )
 
 
@@ -18,6 +19,10 @@ class TestSchemaDate(Schema):
 
 class TestSchemaDateTime(Schema):
     datetime = EDTFDateTimeString()
+
+
+class TestSchemaLVL2Date(Schema):
+    date = EDTFLevel2DateString()
 
 
 def test_dump_date():
@@ -36,6 +41,14 @@ def test_dump_lvl2_date():
     assert TestSchemaDate().dump({"date": "2020-09-XX/2020-10-XX"}) == {
         "date": "2020-09-XX/2020-10-XX",
     }
+
+
+def test_load_lvl2date():
+    s = TestSchemaLVL2Date()
+    assert s.load({"date": "2020?"})
+    assert s.load({"date": "2020-01-01"})
+    assert s.load({"date": "2004-06-~01/2004-06-~20"})
+    assert s.load({"date": "2020-01-XX"})
 
 
 def test_load_date():
