@@ -183,6 +183,24 @@ def test_load_date_intervals():
     }
 
 
+def test_load_date_rejects_open_intervals():
+    s = TestSchemaDate()
+    for value in ("../2020", "2020/..", "/2020", "2020/"):
+        pytest.raises(ValidationError, s.load, {"date": value})
+
+
+def test_load_date_year_boundaries():
+    s = TestSchemaDate()
+    assert s.load({"date": "9999"}) == {"date": "9999"}
+    assert s.load({"date": "0001/9999"}) == {"date": "0001/9999"}
+
+
+def test_load_date_rejects_unrenderable_years_in_intervals():
+    s = TestSchemaDate()
+    for value in ("2020/-2026", "2020/0000"):
+        pytest.raises(ValidationError, s.load, {"date": value})
+
+
 def test_load_valid_month_end_dates():
     s = TestSchemaDate()
     assert s.load({"date": "2020-04-30"}) == {"date": "2020-04-30"}
