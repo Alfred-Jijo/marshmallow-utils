@@ -33,7 +33,8 @@ class EDTFValidator(Validator):
     ):
         """Constructor.
 
-        :params types: List of EDTFObject subclasses that you accept.
+        :params types: List of EDTFObject subclasses that you accept. Use
+            EDTFObject to accept all levels
         """
         self._types = types or []
         self._chronological_interval = chronological_interval
@@ -49,30 +50,61 @@ class EDTFValidator(Validator):
         except ParseException:
             raise ValidationError(self._format_error(value, None))
 
-        # Open or unknown intervals are Level 1
-        # They subclass Interval, so the type check below would let them through
-        if isinstance(e, Level1Interval):
-            raise ValidationError(self._format_error(value, e))
-
         if self._types:
             if not any([isinstance(e, t) for t in self._types]):
                 raise ValidationError(self._format_error(value, e))
-
-        lower, upper = e.lower_strict(), e.upper_strict()
-
-        # babel-edtf formats through Python's datetime
-        # Negative years and 0000 cannot be parsed
-        if not (
-            MINYEAR <= lower.tm_year <= MAXYEAR and MINYEAR <= upper.tm_year <= MAXYEAR
-        ):
-            raise ValidationError(self._format_error(value, e))
 
         if self._chronological_interval:
             # We require intervals to be chronological. EDTF Date and Interval
             # both have same interface and
             # date.lower_strict() <= date.upper_strict() is always True for a
             # Date
-            if upper < lower:
+            if e.upper_strict() < e.lower_strict():
+                raise ValidationError(self._format_error(value, e))
+
+        return value
+
+
+class EDTFLevel0Validator(EDTFValidator):
+    """EDTF Level 0 validator.
+
+    python-edtf parses Level 1 and Level 2 features into subclasses of the
+    Level 0 classes (e.g. ``Level2Interval`` is an ``Interval``), so this
+    validator matches types exactly and checks the rest of the Level 0 rules.
+    """
+
+    def __call__(self, value):
+        """Validate."""
+        try:
+            e = parse_edtf(value)
+        except Exception:
+            # python-edtf can raise more than ParseException on invalid input
+            # (e.g. seasons or malformed months), all of them are invalid here
+            raise ValidationError(self._format_error(value, None))
+
+        if self._types and type(e) not in self._types:
+            raise ValidationError(self._format_error(value, e))
+
+        # Significant digits (e.g. 1950S2) are Level 1 or 2
+        endpoints = [e.lower, e.upper] if isinstance(e, Interval) else [e]
+        for d in endpoints:
+            if getattr(d, "significant_digits", None):
+                raise ValidationError(self._format_error(value, e))
+
+        # babel-edtf formats through Python's datetime, which cannot represent
+        # negative years or 0000
+        lower, upper = e.lower_strict(), e.upper_strict()
+        if not (
+            MINYEAR <= lower.tm_year <= MAXYEAR and MINYEAR <= upper.tm_year <= MAXYEAR
+        ):
+            raise ValidationError(self._format_error(value, e))
+
+        if self._chronological_interval:
+            try:
+                if upper < lower:
+                    raise ValidationError(self._format_error(value, e))
+            except TypeError:
+                # Open bounds are compared as floats
                 raise ValidationError(self._format_error(value, e))
 
         return value
@@ -87,7 +119,7 @@ class EDTFDateString(fields.Str):
 
     def __init__(self, **kwargs):
         """Constructor."""
-        kwargs.setdefault("validate", EDTFValidator(types=[Date, Interval]))
+        kwargs.setdefault("validate", EDTFLevel0Validator(types=[Date, Interval]))
         super().__init__(**kwargs)
 
 
@@ -100,7 +132,7 @@ class EDTFDateTimeString(fields.Str):
 
     def __init__(self, **kwargs):
         """Constructor."""
-        kwargs.setdefault("validate", EDTFValidator())
+        kwargs.setdefault("validate", EDTFLevel0Validator())
         super().__init__(**kwargs)
 
 
