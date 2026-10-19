@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2016-2020 CERN.
+# SPDX-FileCopyrightText: 2016-2026 CERN.
 # SPDX-License-Identifier: MIT
 
 """Extended Date(/Time) Format Level 0 date string field."""
@@ -34,7 +34,7 @@ class EDTFValidator(Validator):
         """Constructor.
 
         :params types: List of EDTFObject subclasses that you accept. Use
-            EDTFObject to accept all levels
+            EDTFObject to accept all levels.
         """
         self._types = types or []
         self._chronological_interval = chronological_interval
