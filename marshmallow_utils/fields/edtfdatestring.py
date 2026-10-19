@@ -77,9 +77,11 @@ class EDTFLevel0Validator(EDTFValidator):
         """Validate."""
         try:
             e = parse_edtf(value)
-        except Exception:
-            # python-edtf can raise more than ParseException on invalid input
-            # (e.g. seasons or malformed months), all of them are invalid here
+        except (TypeError, ParseException, AttributeError):
+            # python-edtf can raise AttributeError on invalid input (e.g. seasons
+            # or malformed months), and pyparsing can raise TypeError under
+            # concurrent use (see babel-edtf parse_edtf). All of them are invalid
+            # here
             raise ValidationError(self._format_error(value, None))
 
         if self._types and type(e) not in self._types:
