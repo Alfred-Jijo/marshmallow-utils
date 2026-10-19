@@ -3,7 +3,7 @@
 
 """Extended Date(/Time) Format Level 0 date string field."""
 
-from datetime import MAXYEAR, MINYEAR
+import datetime as dt
 
 from babel_edtf import parse_edtf
 from edtf import (
@@ -97,7 +97,8 @@ class EDTFLevel0Validator(EDTFValidator):
         # negative years or 0000
         lower, upper = e.lower_strict(), e.upper_strict()
         if not (
-            MINYEAR <= lower.tm_year <= MAXYEAR and MINYEAR <= upper.tm_year <= MAXYEAR
+            dt.MINYEAR <= lower.tm_year <= dt.MAXYEAR
+            and dt.MINYEAR <= upper.tm_year <= dt.MAXYEAR
         ):
             raise ValidationError(self._format_error(value, e))
 
