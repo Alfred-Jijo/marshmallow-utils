@@ -11,6 +11,7 @@ from marshmallow_utils.fields import (
     EDTFDateTimeString,
     EDTFLevel2DateString,
 )
+from marshmallow_utils.fields.edtfdatestring import EDTFLevel0Validator
 
 
 class TestSchemaDate(Schema):
@@ -317,3 +318,45 @@ def test_load_interval_too_many_endpoints():
 def test_load_interval_invalid_end_date():
     s = TestSchemaDate()
     pytest.raises(ValidationError, s.load, {"date": "2020-01-01/garbage"})
+
+
+def test_load_season_is_rejected():
+    # python-edtf's Season.precision reads _month, which a season never sets
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "2001-21"})
+
+
+def test_load_partial_unspecified_is_rejected():
+    # python-edtf's PartialUnspecified.__init__ calls .startswith on a dict
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "1984-1X"})
+
+
+def test_load_oversized_years():
+    s = TestSchemaDate()
+    for value in ("99999", "Y170000002", "Y-170000002", "-9999-12-31"):
+        pytest.raises(ValidationError, s.load, {"date": value})
+
+
+def test_load_year_boundaries():
+    s = TestSchemaDate()
+    assert s.load({"date": "9999-12-31"}) == {"date": "9999-12-31"}
+    assert s.load({"date": "0001-01-01/9999-12-31"}) == {
+        "date": "0001-01-01/9999-12-31",
+    }
+
+
+def test_load_open_interval_rejected_by_type():
+    # Level1Interval is not an exact Level 0 type, so the type check rejects it
+    # before the open bound is compared
+    s = TestSchemaDate()
+    pytest.raises(ValidationError, s.load, {"date": "1985/.."})
+
+
+@pytest.mark.xfail(
+    raises=AttributeError,
+    strict=True,
+    reason="without a type filter, an open bound reaches the tm_year check",
+)
+def test_level0_validator_open_interval_without_types():
+    pytest.raises(ValidationError, EDTFLevel0Validator(types=[]), "1985/..")
